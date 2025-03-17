@@ -220,7 +220,7 @@ const selectDatabase = async () => {
     },
   ]);
 
-  askForTypeORM(database);
+  await askForTypeORM(database);
 };
 
 /**
@@ -534,20 +534,115 @@ const setupESLintPrettier = () => {
     console.log(chalk.red("❌ Failed to setup ESLint & Prettier."), error);
   }
 };
+
+const setupSonarQube = async () => {
+  const { useSonarQube } = await inquirer.prompt([
+    {
+      type: "confirm",
+      name: "useSonarQube",
+      message: "Do you want to add SonarQube integration?",
+      default: true,
+    },
+  ]);
+
+  if (!useSonarQube) return;
+
+  const { sonarServerUrl, sonarToken } = await inquirer.prompt([
+    {
+      type: "input",
+      name: "sonarServerUrl",
+      message: "Enter SonarQube Server URL:",
+      default: "",
+    },
+    {
+      type: "input",
+      name: "sonarToken",
+      message: "Enter SonarQube Token:",
+      default: "null",
+    },
+  ]);
+
+  // Install required dependencies
+  console.log("Installing SonarQube scanner, Husky, and lint-staged...");
+  execSync("pnpm add -D sonarqube-scanner husky lint-staged", {
+    stdio: "inherit",
+  });
+
+  // Enable Husky
+  execSync("pnpm husky install", { stdio: "inherit" });
+
+  // Create Husky pre-commit hook
+  fs.mkdirSync(".husky", { recursive: true });
+  fs.writeFileSync(
+    ".husky/pre-commit",
+    `#!/bin/sh\n. $(dirname "$0")/_/husky.sh\npnpm lint-staged\npnpm sonar || { echo \"SonarQube analysis failed. Aborting push.\"; exit 1; }\n`,
+    { mode: 0o755 }
+  );
+
+  // Create SonarQube analysis script
+  const sonarScript = `
+    require("dotenv").config();
+    const scanner = require("sonarqube-scanner").default;
+  
+    scanner(
+      {
+        serverUrl: process.env.SONAR_SERVER_URL,
+        token: process.env.SONAR_TOKEN,
+        options: {
+          "sonar.projectKey": "budget-control-api",
+          "sonar.qualitygate.wait": "true",
+          "sonar.token": process.env.SONAR_TOKEN,
+          "sonar.exclusions": "node_modules/**, src/migrations/**",
+        },
+      },
+      (error) => {
+        if (error) {
+          return process.exit(1);
+        }
+        return process.exit(0);
+      },
+    );
+    `;
+  fs.writeFileSync("sonar-analysis.js", sonarScript);
+
+  // Update package.json scripts
+  const packageJson = JSON.parse(fs.readFileSync("package.json", "utf8"));
+  packageJson.scripts = {
+    ...packageJson.scripts,
+    sonar: "node ./sonar-analysis.js",
+  };
+
+  // Configure lint-staged
+  packageJson["lint-staged"] = {
+    "*.ts": ["pnpm format", "pnpm lint"],
+  };
+  fs.writeFileSync("package.json", JSON.stringify(packageJson, null, 2));
+
+  // Set environment variables
+  fs.appendFileSync(
+    ".env",
+    `\nSONAR_SERVER_URL=${sonarServerUrl}\nSONAR_TOKEN=${sonarToken}\n`
+  );
+
+  console.log("✅ SonarQube and Husky setup completed!");
+};
+
 const main = async () => {
   ensurePnpm();
   fixPnpmStore();
   ensureNestCLI();
 
   const projectName = await createNestProject();
+
   if (projectName) {
     await setupEnvFile(projectName);
     setupEnvConfigFile();
     setupConfigFile();
   }
 
-  await selectDatabase();
   setupESLintPrettier();
+  await selectDatabase();
+  await setupSonarQube();
 };
 
 main();
