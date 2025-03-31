@@ -16,4 +16,5 @@ export interface UserConfig {
   databaseSync: boolean;
   databaseUri: string;
   databaseLogging: boolean;
+  addDocker: boolean;
 }

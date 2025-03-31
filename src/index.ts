@@ -13,6 +13,7 @@ import { collectPostgresConfig } from "./database/postgress/postgressDbInputes";
 import { UserConfig } from "./types/inputTypes";
 import { setupDatabase } from "./database/configDatabase";
 import { collectMongoDbConfig } from "./database/mysql/collectMongoDbConfig";
+import { addDockerFiles } from "./docker/addDocker";
 
 const collectUserInput = async () => {
   const baseConfig = await inquirer.prompt([
@@ -67,6 +68,12 @@ const collectUserInput = async () => {
       default: "null",
       when: (answers) => answers.useSonarQube,
     },
+    {
+      type: "confirm",
+      name: "addDocker",
+      message: "Do you want to add Docker configuration?",
+      default: true,
+    },
   ]);
 
   // If PostgreSQL is selected, collect additional details
@@ -120,6 +127,10 @@ const main = async () => {
   setupESLintPrettier();
 
   await setupDatabase(userConfig);
+
+  if (userConfig.addDocker) {
+    await addDockerFiles(projectPath);
+  }
 };
 
 main();
