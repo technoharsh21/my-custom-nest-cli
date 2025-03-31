@@ -9,6 +9,7 @@ import { setupTypeORMPostgres } from "./database/typeorm/setupTypeORMPostgres";
 import { setupESLintPrettier } from "./setupESLintPrettier";
 import { setupTypeORMMySQL } from "./database/typeorm/setupTypeORMmySql";
 import { setupMySQLWithoutTypeORM } from "./database/mysql/setupMySQLWithoutTypeORM";
+import { setupPostgresWithoutTypeORM } from "./database/postgress/setupPostgresWithoutTypeORM";
 
 /**
  * Ensures `pnpm` is installed globally.
@@ -254,7 +255,7 @@ const askForTypeORM = async (databaseName: string) => {
     }
   } else {
     if (databaseName === "PostgreSQL") {
-      await setupTypeORMPostgres();
+      await setupPostgresWithoutTypeORM();
     } else if (databaseName === "MySQL") {
       await setupMySQLWithoutTypeORM();
     } else {
