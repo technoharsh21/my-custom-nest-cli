@@ -7,6 +7,7 @@ import chalk from "chalk";
 import * as fs from "fs";
 import * as path from "path";
 import { updateEnvFile } from "../../utills/envUpdate";
+import { DatabaseConfigTypes } from "../envTypes";
 
 export const setupTypeORMPostgres = async ({
   databaseHost,
@@ -17,16 +18,7 @@ export const setupTypeORMPostgres = async ({
   databaseSSL,
   databaseSync,
   databaseLogging,
-}: {
-  databaseHost: string;
-  databasePort: number;
-  databaseName: string;
-  databaseUser: string;
-  databasePassword: string;
-  databaseSSL: boolean;
-  databaseSync: boolean;
-  databaseLogging: boolean;
-}) => {
+}: DatabaseConfigTypes) => {
   console.log(chalk.blue("📦 Installing PostgreSQL & TypeORM dependencies..."));
 
   try {

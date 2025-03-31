@@ -3,8 +3,19 @@ import chalk from "chalk";
 import inquirer from "inquirer";
 import * as fs from "fs";
 import * as path from "path";
+import { DatabaseConfigTypes } from "../envTypes";
+import { updateEnvFile } from "../../utills/envUpdate";
 
-export const setupTypeORMMySQL = async () => {
+export const setupTypeORMMySQL = async ({
+  databaseHost,
+  databasePort,
+  databaseName,
+  databaseUser,
+  databasePassword,
+  databaseSSL,
+  databaseSync,
+  databaseLogging,
+}: DatabaseConfigTypes) => {
   console.log(chalk.blue("📦 Installing MySQL & TypeORM dependencies..."));
 
   try {
@@ -15,55 +26,6 @@ export const setupTypeORMMySQL = async () => {
     console.log(
       chalk.green("✔ MySQL TypeORM dependencies installed successfully.")
     );
-
-    // Prompt user for database configuration
-    console.log(chalk.yellow("\n🔧 Configure MySQL Connection:"));
-
-    const answers = await inquirer.prompt([
-      {
-        type: "input",
-        name: "databaseHost",
-        message: "Enter database host:",
-        default: "localhost",
-      },
-      {
-        type: "input",
-        name: "databasePort",
-        message: "Enter database port:",
-        default: "3306",
-        validate: (input) => /^\d+$/.test(input) || "Port must be a number",
-      },
-      {
-        type: "input",
-        name: "databaseName",
-        message: "Enter database name:",
-        validate: (input) => input.trim() !== "" || "Database name is required",
-      },
-      {
-        type: "input",
-        name: "databaseUser",
-        message: "Enter database user:",
-        default: "root",
-      },
-      {
-        type: "password",
-        name: "databasePassword",
-        message: "Enter database password:",
-        mask: "*",
-      },
-      {
-        type: "confirm",
-        name: "databaseSync",
-        message: "Enable synchronize mode?",
-        default: false,
-      },
-      {
-        type: "confirm",
-        name: "databaseLogging",
-        message: "Enable query logging?",
-        default: false,
-      },
-    ]);
 
     // Ensure `src/modules/database/` exists
     const databaseModuleDir = path.join(process.cwd(), "src/modules/database");
@@ -105,8 +67,8 @@ export const setupTypeORMMySQL = async () => {
         username: getOsEnv('DATABASE_USER'),
         password: getOsEnv('DATABASE_PASSWORD'),
         database: getOsEnv('DATABASE_NAME'),
-        synchronize: ${answers.databaseSync},
-        logging: ${answers.databaseLogging},
+        synchronize: getOsEnv('DATABASE_SYNCHRONIZE'),
+        logging: getOsEnv('DATABASE_LOGGING'),
         autoLoadEntities: true,
       };`;
 
@@ -116,31 +78,20 @@ export const setupTypeORMMySQL = async () => {
     );
     console.log(chalk.green("✔ Database config file created."));
 
-    // Update `.env` file with user inputs
-    const envPath = path.join(process.cwd(), ".env");
-    let envContent = fs.existsSync(envPath)
-      ? fs.readFileSync(envPath, "utf8")
-      : "";
-
-    const newEnvVariables = [
-      `DATABASE_HOST=${answers.databaseHost}`,
-      `DATABASE_PORT=${answers.databasePort}`,
-      `DATABASE_NAME=${answers.databaseName}`,
-      `DATABASE_USER=${answers.databaseUser}`,
-      `DATABASE_PASSWORD=${answers.databasePassword}`,
-      `DATABASE_SYNCHRONIZE=${answers.databaseSync}`,
-      `DATABASE_LOGGING=${answers.databaseLogging}`,
-    ];
-
-    newEnvVariables.forEach((envVar) => {
-      const [key] = envVar.split("=");
-      if (!envContent.includes(key)) {
-        envContent += `\n${envVar}`;
-      }
+    updateEnvFile({
+      DATABASE_HOST: databaseHost,
+      DATABASE_PORT: databasePort,
+      DATABASE_NAME: databaseName,
+      DATABASE_USER: databaseUser,
+      DATABASE_PASSWORD: databasePassword,
+      DATABASE_SSL: databaseSSL,
+      DATABASE_SYNCHRONIZE: databaseSync,
+      DATABASE_LOGGING: databaseLogging,
     });
 
-    fs.writeFileSync(envPath, envContent.trim());
-    console.log(chalk.green("✔ .env file updated with database variables."));
+    console.log(
+      chalk.green("✔ MySQL environment variables updated in .env file.")
+    );
 
     // Import DatabaseModule into AppModule
     const appModulePath = path.join(process.cwd(), "src/app.module.ts");

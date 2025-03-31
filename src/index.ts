@@ -5,17 +5,13 @@ import chalk from "chalk";
 import inquirer from "inquirer";
 import * as path from "path";
 import * as fs from "fs";
-import { setupTypeORMPostgres } from "./database/typeorm/setupTypeORMPostgres";
 import { setupESLintPrettier } from "./setupESLintPrettier";
-import { setupTypeORMMySQL } from "./database/typeorm/setupTypeORMmySql";
-import { setupMySQLWithoutTypeORM } from "./database/mysql/setupMySQLWithoutTypeORM";
-import { setupPostgresWithoutTypeORM } from "./database/postgress/setupPostgresWithoutTypeORM";
-import { setupMongoDBWithoutTypeORM } from "./database/mongodb/setupMongoDBWithoutTypeORM";
-import { setupMongoDBWithTypeORM } from "./database/typeorm/setupMongoDBWithTypeORM";
 import { ensureNestCLI } from "./nest/ensureNestCli";
 import { ensurePnpm } from "./pnpm /ensurePnpm";
 import { fixPnpmStore } from "./pnpm /fixPnpmStore";
 import { collectPostgresConfig } from "./database/postgress/postgressDbInputes";
+import { UserConfig } from "./types/inputTypes";
+import { setupDatabase } from "./database/configDatabase";
 
 const collectUserInput = async () => {
   const baseConfig = await inquirer.prompt([
@@ -74,7 +70,7 @@ const collectUserInput = async () => {
 
   // If PostgreSQL is selected, collect additional details
   let postgresConfig = {};
-  if (baseConfig.database === "PostgreSQL") {
+  if (baseConfig.database === "PostgreSQL" || baseConfig.database === "MySQL") {
     postgresConfig = await collectPostgresConfig();
   }
 
@@ -86,24 +82,7 @@ const main = async () => {
   fixPnpmStore();
   ensureNestCLI();
 
-  const userConfig = (await collectUserInput()) as {
-    projectName: string;
-    PORT: string;
-    ENVIRONMENT: string;
-    database: string;
-    useTypeORM: boolean;
-    useSonarQube: boolean;
-    sonarServerUrl: string;
-    sonarToken: string;
-    databaseHost: string;
-    databasePort: number;
-    databaseName: string;
-    databaseUser: string;
-    databasePassword: string;
-    databaseSSL: boolean;
-    databaseSync: boolean;
-    databaseLogging: boolean;
-  };
+  const userConfig = (await collectUserInput()) as UserConfig;
   const projectPath = path.join(process.cwd(), userConfig.projectName);
 
   if (fs.existsSync(projectPath)) {
@@ -136,32 +115,7 @@ const main = async () => {
 
   setupESLintPrettier();
 
-  if (userConfig.useTypeORM) {
-    if (userConfig.database === "PostgreSQL") {
-      await setupTypeORMPostgres({
-        databaseHost: userConfig.databaseHost,
-        databasePort: userConfig.databasePort,
-        databaseName: userConfig.databaseName,
-        databaseUser: userConfig.databaseUser,
-        databasePassword: userConfig.databasePassword,
-        databaseSSL: userConfig.databaseSSL,
-        databaseSync: userConfig.databaseSync,
-        databaseLogging: userConfig.databaseLogging,
-      });
-    } else if (userConfig.database === "MongoDB") {
-      await setupMongoDBWithTypeORM();
-    } else if (userConfig.database === "MySQL") {
-      await setupTypeORMMySQL();
-    }
-  } else {
-    if (userConfig.database === "PostgreSQL") {
-      await setupPostgresWithoutTypeORM();
-    } else if (userConfig.database === "MongoDB") {
-      await setupMongoDBWithoutTypeORM();
-    } else if (userConfig.database === "MySQL") {
-      await setupMySQLWithoutTypeORM();
-    }
-  }
+  await setupDatabase(userConfig);
 };
 
 main();
