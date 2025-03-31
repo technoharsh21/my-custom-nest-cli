@@ -108,7 +108,7 @@ export const setupTypeORMPostgres = async ({
       );
       appModuleContent = appModuleContent.replace(
         "imports: [",
-        "imports: [DatabaseModule, "
+        "imports: [DatabaseModule "
       );
       fs.writeFileSync(appModulePath, appModuleContent);
       console.log(chalk.green("✔ DatabaseModule imported inside AppModule."));

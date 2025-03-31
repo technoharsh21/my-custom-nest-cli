@@ -14,6 +14,7 @@ import { UserConfig } from "./types/inputTypes";
 import { setupDatabase } from "./database/configDatabase";
 import { collectMongoDbConfig } from "./database/mysql/collectMongoDbConfig";
 import { addDockerFiles } from "./docker/addDocker";
+import { addModule } from "./userModule/addModule";
 
 const collectUserInput = async () => {
   const baseConfig = await inquirer.prompt([
@@ -74,6 +75,12 @@ const collectUserInput = async () => {
       message: "Do you want to add Docker configuration?",
       default: true,
     },
+    {
+      type: "confirm",
+      name: "addUserModule",
+      message: "Do you want to add User module?",
+      default: true,
+    },
   ]);
 
   // If PostgreSQL is selected, collect additional details
@@ -130,6 +137,10 @@ const main = async () => {
 
   if (userConfig.addDocker) {
     await addDockerFiles(projectPath);
+  }
+
+  if (userConfig.addUserModule) {
+    await addModule(userConfig);
   }
 };
 

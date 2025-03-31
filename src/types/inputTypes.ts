@@ -17,4 +17,5 @@ export interface UserConfig {
   databaseUri: string;
   databaseLogging: boolean;
   addDocker: boolean;
+  addUserModule: boolean;
 }
