@@ -3,8 +3,13 @@ import chalk from "chalk";
 import inquirer from "inquirer";
 import * as fs from "fs";
 import * as path from "path";
+import { updateEnvFile } from "../../utills/envUpdate";
 
-export const setupMongoDBWithoutTypeORM = async () => {
+export const setupMongoDBWithoutTypeORM = async ({
+  databaseUri,
+}: {
+  databaseUri: string;
+}) => {
   console.log(chalk.blue("📦 Installing MongoDB dependencies..."));
 
   try {
@@ -14,15 +19,6 @@ export const setupMongoDBWithoutTypeORM = async () => {
 
     // Prompt user for database configuration
     console.log(chalk.yellow("\n🔧 Configure MongoDB Connection:"));
-
-    const answers = await inquirer.prompt([
-      {
-        type: "input",
-        name: "databaseUri",
-        message: "Enter MongoDB connection URI:",
-        default: "mongodb://localhost:27017/mydatabase",
-      },
-    ]);
 
     // Ensure `src/modules/database/` exists
     const databaseModuleDir = path.join(process.cwd(), "src/modules/database");
@@ -56,16 +52,13 @@ export class MongoDBService implements OnModuleInit, OnModuleDestroy {
     console.log(chalk.green("✔ MongoDBService created."));
 
     // Update `.env` file with user inputs
-    const envPath = path.join(process.cwd(), ".env");
-    let envContent = fs.existsSync(envPath) ? fs.readFileSync(envPath, "utf8") : "";
+    updateEnvFile({
+      DATABASE_URI: databaseUri,
+    });
 
-    const newEnvVariable = `DATABASE_URI=${answers.databaseUri}`;
-    if (!envContent.includes("DATABASE_URI")) {
-      envContent += `\n${newEnvVariable}`;
-    }
-
-    fs.writeFileSync(envPath, envContent.trim());
-    console.log(chalk.green("✔ .env file updated with database URI."));
+    console.log(
+      chalk.green("✔ MongoDB environment variables updated in .env file.")
+    );
 
     // Import MongoDBService into AppModule
     const appModulePath = path.join(process.cwd(), "src/app.module.ts");
@@ -88,6 +81,9 @@ export class MongoDBService implements OnModuleInit, OnModuleDestroy {
       console.log(chalk.green("✔ MongoDBService imported inside AppModule."));
     }
   } catch (error) {
-    console.log(chalk.red("❌ Failed to setup MongoDB without TypeORM."), error);
+    console.log(
+      chalk.red("❌ Failed to setup MongoDB without TypeORM."),
+      error
+    );
   }
 };

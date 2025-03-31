@@ -12,6 +12,7 @@ import { fixPnpmStore } from "./pnpm /fixPnpmStore";
 import { collectPostgresConfig } from "./database/postgress/postgressDbInputes";
 import { UserConfig } from "./types/inputTypes";
 import { setupDatabase } from "./database/configDatabase";
+import { collectMongoDbConfig } from "./database/mysql/collectMongoDbConfig";
 
 const collectUserInput = async () => {
   const baseConfig = await inquirer.prompt([
@@ -70,11 +71,14 @@ const collectUserInput = async () => {
 
   // If PostgreSQL is selected, collect additional details
   let postgresConfig = {};
+  let mongoDbConfig = {};
   if (baseConfig.database === "PostgreSQL" || baseConfig.database === "MySQL") {
     postgresConfig = await collectPostgresConfig();
+  } else if (baseConfig.database === "MongoDB") {
+    mongoDbConfig = await collectMongoDbConfig();
   }
 
-  return { ...baseConfig, ...postgresConfig };
+  return { ...baseConfig, ...postgresConfig, ...mongoDbConfig };
 };
 
 const main = async () => {

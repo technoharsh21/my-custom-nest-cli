@@ -3,26 +3,23 @@ import chalk from "chalk";
 import inquirer from "inquirer";
 import * as fs from "fs";
 import * as path from "path";
+import { updateEnvFile } from "../../utills/envUpdate";
 
-export const setupMongoDBWithTypeORM = async () => {
+export const setupMongoDBWithTypeORM = async ({
+  databaseUri,
+}: {
+  databaseUri: string;
+}) => {
   console.log(chalk.blue("📦 Installing MongoDB & TypeORM dependencies..."));
 
   try {
     // Install required packages
-    execSync("pnpm add @nestjs/typeorm typeorm mongodb dotenv", { stdio: "inherit" });
-    console.log(chalk.green("✔ MongoDB TypeORM dependencies installed successfully."));
-
-    // Prompt user for database configuration
-    console.log(chalk.yellow("\n🔧 Configure MongoDB Connection:"));
-
-    const answers = await inquirer.prompt([
-      {
-        type: "input",
-        name: "databaseUri",
-        message: "Enter MongoDB connection URI:",
-        default: "mongodb://localhost:27017/mydatabase",
-      },
-    ]);
+    execSync("pnpm add @nestjs/typeorm typeorm mongodb dotenv", {
+      stdio: "inherit",
+    });
+    console.log(
+      chalk.green("✔ MongoDB TypeORM dependencies installed successfully.")
+    );
 
     // Ensure `src/modules/database/` exists
     const databaseModuleDir = path.join(process.cwd(), "src/modules/database");
@@ -73,16 +70,13 @@ export const databaseConfig: TypeOrmModuleOptions = {
     console.log(chalk.green("✔ Database config file created."));
 
     // Update `.env` file with user inputs
-    const envPath = path.join(process.cwd(), ".env");
-    let envContent = fs.existsSync(envPath) ? fs.readFileSync(envPath, "utf8") : "";
+    updateEnvFile({
+      DATABASE_URI: databaseUri,
+    });
 
-    const newEnvVariable = `DATABASE_URI=${answers.databaseUri}`;
-    if (!envContent.includes("DATABASE_URI")) {
-      envContent += `\n${newEnvVariable}`;
-    }
-
-    fs.writeFileSync(envPath, envContent.trim());
-    console.log(chalk.green("✔ .env file updated with database URI."));
+    console.log(
+      chalk.green("✔ MongoDB environment variables updated in .env file.")
+    );
 
     // Import DatabaseModule into AppModule
     const appModulePath = path.join(process.cwd(), "src/app.module.ts");

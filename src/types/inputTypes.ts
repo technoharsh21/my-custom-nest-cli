@@ -14,5 +14,6 @@ export interface UserConfig {
   databasePassword: string;
   databaseSSL: boolean;
   databaseSync: boolean;
+  databaseUri: string;
   databaseLogging: boolean;
 }
