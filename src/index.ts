@@ -8,6 +8,7 @@ import * as fs from "fs";
 import { setupTypeORMPostgres } from "./database/typeorm/setupTypeORMPostgres";
 import { setupESLintPrettier } from "./setupESLintPrettier";
 import { setupTypeORMMySQL } from "./database/typeorm/setupTypeORMmySql";
+import { setupMySQLWithoutTypeORM } from "./database/mysql/setupMySQLWithoutTypeORM";
 
 /**
  * Ensures `pnpm` is installed globally.
@@ -252,7 +253,15 @@ const askForTypeORM = async (databaseName: string) => {
       );
     }
   } else {
-    console.log(chalk.yellow(`⚠ Skipping TypeORM setup for ${databaseName}.`));
+    if (databaseName === "PostgreSQL") {
+      await setupTypeORMPostgres();
+    } else if (databaseName === "MySQL") {
+      await setupMySQLWithoutTypeORM();
+    } else {
+      console.log(
+        chalk.yellow(`⚠ setup for ${databaseName} is not implemented yet.`)
+      );
+    }
   }
 };
 
