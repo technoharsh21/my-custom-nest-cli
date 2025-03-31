@@ -7,6 +7,7 @@ import * as path from "path";
 import * as fs from "fs";
 import { setupTypeORMPostgres } from "./database/typeorm/setupTypeORMPostgres";
 import { setupESLintPrettier } from "./setupESLintPrettier";
+import { setupTypeORMMySQL } from "./database/typeorm/setupTypeORMmySql";
 
 /**
  * Ensures `pnpm` is installed globally.
@@ -241,6 +242,8 @@ const askForTypeORM = async (databaseName: string) => {
   if (useTypeORM) {
     if (databaseName === "PostgreSQL") {
       await setupTypeORMPostgres();
+    } else if (databaseName === "MySQL") {
+      await setupTypeORMMySQL();
     } else {
       console.log(
         chalk.yellow(
