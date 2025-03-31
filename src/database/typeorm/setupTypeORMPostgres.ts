@@ -4,11 +4,29 @@
 
 import { execSync } from "child_process";
 import chalk from "chalk";
-import inquirer from "inquirer";
 import * as fs from "fs";
 import * as path from "path";
+import { updateEnvFile } from "../../utills/envUpdate";
 
-export const setupTypeORMPostgres = async () => {
+export const setupTypeORMPostgres = async ({
+  databaseHost,
+  databasePort,
+  databaseName,
+  databaseUser,
+  databasePassword,
+  databaseSSL,
+  databaseSync,
+  databaseLogging,
+}: {
+  databaseHost: string;
+  databasePort: number;
+  databaseName: string;
+  databaseUser: string;
+  databasePassword: string;
+  databaseSSL: boolean;
+  databaseSync: boolean;
+  databaseLogging: boolean;
+}) => {
   console.log(chalk.blue("📦 Installing PostgreSQL & TypeORM dependencies..."));
 
   try {
@@ -20,60 +38,20 @@ export const setupTypeORMPostgres = async () => {
       chalk.green("✔ PostgreSQL TypeORM dependencies installed successfully.")
     );
 
-    // Prompt user for database configuration
-    console.log(chalk.yellow("\n🔧 Configure PostgreSQL Connection:"));
+    updateEnvFile({
+      DATABASE_HOST: databaseHost,
+      DATABASE_PORT: databasePort,
+      DATABASE_NAME: databaseName,
+      DATABASE_USER: databaseUser,
+      DATABASE_PASSWORD: databasePassword,
+      DATABASE_SSL: databaseSSL,
+      DATABASE_SYNCHRONIZE: databaseSync,
+      DATABASE_LOGGING: databaseLogging,
+    });
 
-    const answers = await inquirer.prompt([
-      {
-        type: "input",
-        name: "databaseHost",
-        message: "Enter database host:",
-        default: "localhost",
-      },
-      {
-        type: "input",
-        name: "databasePort",
-        message: "Enter database port:",
-        default: "5432",
-        validate: (input) => /^\d+$/.test(input) || "Port must be a number",
-      },
-      {
-        type: "input",
-        name: "databaseName",
-        message: "Enter database name:",
-        validate: (input) => input.trim() !== "" || "Database name is required",
-      },
-      {
-        type: "input",
-        name: "databaseUser",
-        message: "Enter database user:",
-        default: "postgres",
-      },
-      {
-        type: "password",
-        name: "databasePassword",
-        message: "Enter database password:",
-        mask: "*",
-      },
-      {
-        type: "confirm",
-        name: "databaseSSL",
-        message: "Enable SSL?",
-        default: false,
-      },
-      {
-        type: "confirm",
-        name: "databaseSync",
-        message: "Enable synchronize mode?",
-        default: false,
-      },
-      {
-        type: "confirm",
-        name: "databaseLogging",
-        message: "Enable query logging?",
-        default: false,
-      },
-    ]);
+    console.log(
+      chalk.green("✔ PostgreSQL environment variables updated in .env file.")
+    );
 
     // Ensure `src/modules/database/` exists
     const databaseModuleDir = path.join(process.cwd(), "src/modules/database");
@@ -115,9 +93,9 @@ export const setupTypeORMPostgres = async () => {
       username: getOsEnv('DATABASE_USER'),
       password: getOsEnv('DATABASE_PASSWORD'),
       database: getOsEnv('DATABASE_NAME'),
-      ssl: ${answers.databaseSSL},
-      synchronize: ${answers.databaseSync},
-      logging: ${answers.databaseLogging},
+      ssl: ${databaseSSL},
+      synchronize: ${databaseSync},
+      logging: ${databaseLogging},
       autoLoadEntities: true,
     };`;
 
@@ -126,33 +104,6 @@ export const setupTypeORMPostgres = async () => {
       databaseConfigContent
     );
     console.log(chalk.green("✔ Database config file created."));
-
-    // Update `.env` file with user inputs
-    const envPath = path.join(process.cwd(), ".env");
-    let envContent = fs.existsSync(envPath)
-      ? fs.readFileSync(envPath, "utf8")
-      : "";
-
-    const newEnvVariables = [
-      `DATABASE_HOST=${answers.databaseHost}`,
-      `DATABASE_PORT=${answers.databasePort}`,
-      `DATABASE_NAME=${answers.databaseName}`,
-      `DATABASE_USER=${answers.databaseUser}`,
-      `DATABASE_PASSWORD=${answers.databasePassword}`,
-      `DATABASE_SSL=${answers.databaseSSL}`,
-      `DATABASE_SYNCHRONIZE=${answers.databaseSync}`,
-      `DATABASE_LOGGING=${answers.databaseLogging}`,
-    ];
-
-    newEnvVariables.forEach((envVar) => {
-      const [key] = envVar.split("=");
-      if (!envContent.includes(key)) {
-        envContent += `\n${envVar}`;
-      }
-    });
-
-    fs.writeFileSync(envPath, envContent.trim());
-    console.log(chalk.green("✔ .env file updated with database variables."));
 
     // Import DatabaseModule into AppModule
     const appModulePath = path.join(process.cwd(), "src/app.module.ts");
