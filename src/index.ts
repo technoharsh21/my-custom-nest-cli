@@ -12,37 +12,8 @@ import { setupMySQLWithoutTypeORM } from "./database/mysql/setupMySQLWithoutType
 import { setupPostgresWithoutTypeORM } from "./database/postgress/setupPostgresWithoutTypeORM";
 import { setupMongoDBWithoutTypeORM } from "./database/mongodb/setupMongoDBWithoutTypeORM";
 import { setupMongoDBWithTypeORM } from "./database/typeorm/setupMongoDBWithTypeORM";
-
-/**
- * Ensures `pnpm` is installed globally.
- */
-const ensurePnpm = () => {
-  try {
-    execSync("pnpm --version", { stdio: "ignore" });
-    console.log(chalk.green("✔ pnpm is already installed."));
-  } catch (error) {
-    console.log(chalk.yellow("⚠ pnpm is not installed. Installing..."));
-    execSync("npm install -g pnpm", { stdio: "inherit" });
-    console.log(chalk.green("✔ pnpm installed successfully."));
-  }
-};
-
-/**
- * Ensures the correct global store location is set for `pnpm`.
- */
-const fixPnpmStore = () => {
-  try {
-    const storePath = execSync("pnpm store path").toString().trim();
-    console.log(chalk.blue(`ℹ Using pnpm store at: ${storePath}`));
-
-    execSync(`pnpm config set store-dir ${storePath} --global`, {
-      stdio: "inherit",
-    });
-    console.log(chalk.green("✔ Global store directory set correctly."));
-  } catch (error) {
-    console.log(chalk.red("❌ Failed to set pnpm store directory."));
-  }
-};
+import { fixPnpmStore } from "./pnpm /fixPnpmStore";
+import { ensurePnpm } from "./pnpm /ensurePnpm";
 
 /**
  * Ensures `@nestjs/cli` is installed globally.
