@@ -17,6 +17,7 @@ import { addDockerFiles } from "./docker/addDocker";
 import { addModule } from "./userModule/addModule";
 import { addSwagger } from "./swagger/addSwagger";
 import { setupClassValidator } from "./classValidator/addClassValidator";
+import { connectRedis } from "./redis/connect-redis";
 
 const collectUserInput = async () => {
   const baseConfig = await inquirer.prompt([
@@ -83,6 +84,12 @@ const collectUserInput = async () => {
       message: "Do you want to add User module?",
       default: true,
     },
+    {
+      type: "confirm",
+      name: "addRedis",
+      message: "Do you want to add Redis configuration?",
+      default: true,
+    },
   ]);
 
   // If PostgreSQL is selected, collect additional details
@@ -145,6 +152,10 @@ const main = async () => {
 
   if (userConfig.addUserModule) {
     await addModule(userConfig);
+  }
+
+  if (userConfig.addRedis) {
+    await connectRedis({ projectName: userConfig.projectName });
   }
 };
 

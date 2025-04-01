@@ -18,4 +18,5 @@ export interface UserConfig {
   databaseLogging: boolean;
   addDocker: boolean;
   addUserModule: boolean;
+  addRedis: boolean;
 }
