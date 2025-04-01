@@ -16,6 +16,7 @@ import { collectMongoDbConfig } from "./database/mysql/collectMongoDbConfig";
 import { addDockerFiles } from "./docker/addDocker";
 import { addModule } from "./userModule/addModule";
 import { addSwagger } from "./swagger/addSwagger";
+import { setupClassValidator } from "./classValidator/addClassValidator";
 
 const collectUserInput = async () => {
   const baseConfig = await inquirer.prompt([
@@ -125,7 +126,7 @@ const main = async () => {
   fs.mkdirSync("src/config", { recursive: true });
   fs.writeFileSync(
     "src/config/app.config.ts",
-    `export const appConfig = { port: +process.env.PORT ?? "", environment: process.env.ENVIRONMENT ?? "" };`
+    `export const appConfig = { port: +(process.env.PORT || 3000), environment: process.env.ENVIRONMENT ?? "" };`
   );
   fs.writeFileSync(
     "src/config/env.config.ts",
@@ -134,6 +135,7 @@ const main = async () => {
 
   setupESLintPrettier();
   addSwagger();
+  setupClassValidator();
 
   await setupDatabase(userConfig);
 
