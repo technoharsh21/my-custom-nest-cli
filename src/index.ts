@@ -140,6 +140,17 @@ const main = async () => {
     `import { config } from 'dotenv';\nconfig();\nexport function getOsEnv(key: string) { return process.env[key] || ''; }`
   );
 
+  fs.writeFileSync(
+    "src/config/env.config.ts",
+    `import { config } from 'dotenv';\nconfig();\nexport function getOsEnv(key: string) { return process.env[key] || ''; }\nexport function getOsEnvOptional(key: string): string | undefined { return process.env[key]; }`
+  );
+
+  fs.writeFileSync(
+    "src/config/env.config.ts",
+    `import { config } from 'dotenv';\nconfig();\n\nexport function getOsEnv(key: string) { return process.env[key] || ''; }\n\nexport function getOsEnvOptional(key: string): string | undefined { return process.env[key]; }\n`,
+    "utf8"
+  );
+
   setupESLintPrettier();
   addSwagger();
   setupClassValidator();
